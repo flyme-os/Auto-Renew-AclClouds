@@ -265,7 +265,7 @@ def extract_duration_like(text):
         if re.search(r'expires\s+in|剩余|还有', line, re.I) and idx + 1 < len(lines):
             candidate = lines[idx + 1]
             if extract_date_like(candidate) or re.search(r'\d', candidate):
-                # “Expires in”标签单独占一行，时长值在下一行，去掉标签只保留数值
+                # "Expires in"标签单独占一行，时长值在下一行，去掉标签只保留数值
                 return re.sub(r'^(?:expires\s*in|剩余|还有)\s*[:：]?\s*', '', candidate, flags=re.I).strip()
 
     match = re.search(
@@ -841,9 +841,17 @@ def login(sb, email, password):
     try:
         wait_for_url_change(sb, login_page_url, timeout=30)
         if '/auth/login' not in sb.get_current_url():
-            sb.assert_title('Home | ACLClouds')
-            print("✅ 登录成功！")
-            return True
+            # 检查页面标题，支持多种语言版本（Home, Accueil, 首页等）
+            page_title = sb.get_title()
+            print(f"当前页面标题: {page_title}")
+            
+            # 验证是否已登录（检查 URL 和标题中是否包含 ACLClouds）
+            if 'aclclouds' in page_title.lower():
+                print("✅ 登录成功！")
+                return True
+            else:
+                print(f"❌ 登录可能失败，未检测到预期的页面标题。当前标题: {page_title}")
+                return False
         else:
             # 提取错误信息
             error_msg = ""
